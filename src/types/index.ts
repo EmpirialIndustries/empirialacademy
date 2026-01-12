@@ -46,3 +46,30 @@ export interface Resource {
   uploaded_by: string | null;
   created_at: string;
 }
+
+export interface TutorClass {
+  id: string;
+  tutor_id: string;
+  title: string;
+  subject: string;
+  grade: number;
+  monthly_price: number;
+  schedule_days: string[];
+  start_time: string;
+  meeting_link: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  tutor?: Profile;
+  enrollment_count?: number;
+}
+
+export interface Enrollment {
+  id: string;
+  student_id: string;
+  class_id: string;
+  subscribed_at: string;
+  is_active: boolean;
+  class?: TutorClass;
+  student?: Profile;
+}

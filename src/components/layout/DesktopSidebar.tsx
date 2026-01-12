@@ -1,4 +1,4 @@
-import { Home, Video, BookOpen, User, LogOut, GraduationCap } from 'lucide-react';
+import { Home, Users, BookOpen, User, LogOut, GraduationCap, Search, Calendar, Video } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Dashboard' },
+  { to: '/tutors', icon: Search, label: 'Find Tutors' },
+  { to: '/groups', icon: Users, label: 'My Classes' },
+  { to: '/schedule', icon: Calendar, label: 'Schedule' },
   { to: '/classroom', icon: Video, label: 'Classroom' },
   { to: '/resources', icon: BookOpen, label: 'Resources' },
   { to: '/profile', icon: User, label: 'Profile' },
