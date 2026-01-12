@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      classes: {
+        Row: {
+          created_at: string
+          grade: number
+          id: string
+          is_active: boolean
+          meeting_link: string | null
+          monthly_price: number
+          schedule_days: string[]
+          start_time: string
+          subject: string
+          title: string
+          tutor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          grade: number
+          id?: string
+          is_active?: boolean
+          meeting_link?: string | null
+          monthly_price: number
+          schedule_days?: string[]
+          start_time: string
+          subject: string
+          title: string
+          tutor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          grade?: number
+          id?: string
+          is_active?: boolean
+          meeting_link?: string | null
+          monthly_price?: number
+          schedule_days?: string[]
+          start_time?: string
+          subject?: string
+          title?: string
+          tutor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enrollments: {
+        Row: {
+          class_id: string
+          id: string
+          is_active: boolean
+          student_id: string
+          subscribed_at: string
+        }
+        Insert: {
+          class_id: string
+          id?: string
+          is_active?: boolean
+          student_id: string
+          subscribed_at?: string
+        }
+        Update: {
+          class_id?: string
+          id?: string
+          is_active?: boolean
+          student_id?: string
+          subscribed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
