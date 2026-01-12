@@ -9,6 +9,9 @@ import Auth from "./pages/Auth";
 import Classroom from "./pages/Classroom";
 import Resources from "./pages/Resources";
 import Profile from "./pages/Profile";
+import Tutors from "./pages/Tutors";
+import Groups from "./pages/Groups";
+import Schedule from "./pages/Schedule";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +26,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/tutors" element={<Tutors />} />
+            <Route path="/groups" element={<Groups />} />
+            <Route path="/schedule" element={<Schedule />} />
             <Route path="/classroom" element={<Classroom />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/profile" element={<Profile />} />
