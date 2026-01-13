@@ -28,7 +28,8 @@ export interface Session {
 
 export interface Message {
   id: string;
-  session_id: string;
+  session_id: string | null;
+  class_id: string | null;
   sender_id: string;
   content: string;
   created_at: string;
