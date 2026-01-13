@@ -1,4 +1,4 @@
-import { Home, Users, BookOpen, Calendar, Search } from 'lucide-react';
+import { Home, Users, Calendar, Search, User } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -7,6 +7,7 @@ const navItems = [
   { to: '/tutors', icon: Search, label: 'Tutors' },
   { to: '/groups', icon: Users, label: 'Classes' },
   { to: '/schedule', icon: Calendar, label: 'Schedule' },
+  { to: '/profile', icon: User, label: 'Profile' },
 ];
 
 export function MobileNav() {
