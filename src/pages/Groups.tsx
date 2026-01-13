@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { ClassCard } from '@/components/groups/ClassCard';
+import { ClassSidebar } from '@/components/groups/ClassSidebar';
+import { GroupChatPanel } from '@/components/groups/GroupChatPanel';
 import { CreateClassForm } from '@/components/groups/CreateClassForm';
 import { StudentListModal } from '@/components/groups/StudentListModal';
-import { Button } from '@/components/ui/button';
 import { TutorClass, Profile, Enrollment } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Loader2, Search, Users } from 'lucide-react';
+import { Loader2, Users, Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export default function Groups() {
   const navigate = useNavigate();
@@ -20,9 +22,11 @@ export default function Groups() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const [selectedClass, setSelectedClass] = useState<TutorClass | null>(null);
+  const [selectedClassIdForStudents, setSelectedClassIdForStudents] = useState<string | null>(null);
   const [students, setStudents] = useState<Profile[]>([]);
   const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -64,7 +68,13 @@ export default function Groups() {
         setEnrollmentCounts(counts);
       }
 
-      setClasses(data as TutorClass[] || []);
+      const classesData = data as TutorClass[] || [];
+      setClasses(classesData);
+      
+      // Auto-select first class if none selected
+      if (classesData.length > 0 && !selectedClass) {
+        setSelectedClass(classesData[0]);
+      }
     } catch (error) {
       console.error('Error fetching classes:', error);
       toast({
@@ -95,7 +105,13 @@ export default function Groups() {
 
       if (error) throw error;
 
-      setEnrollments(data as Enrollment[] || []);
+      const enrollmentsData = data as Enrollment[] || [];
+      setEnrollments(enrollmentsData);
+      
+      // Auto-select first class if none selected
+      if (enrollmentsData.length > 0 && !selectedClass && enrollmentsData[0].class) {
+        setSelectedClass(enrollmentsData[0].class);
+      }
     } catch (error) {
       console.error('Error fetching enrollments:', error);
       toast({
@@ -132,7 +148,7 @@ export default function Groups() {
       const meetingLink = roomResponse.data?.url;
 
       // Insert the class
-      const { error } = await supabase.from('classes').insert({
+      const { data, error } = await supabase.from('classes').insert({
         tutor_id: profile.id,
         title: formData.title,
         subject: formData.subject,
@@ -141,7 +157,7 @@ export default function Groups() {
         schedule_days: formData.schedule_days,
         start_time: formData.start_time,
         meeting_link: meetingLink,
-      });
+      }).select().single();
 
       if (error) throw error;
 
@@ -152,6 +168,11 @@ export default function Groups() {
 
       setIsCreateOpen(false);
       fetchTutorClasses();
+      
+      // Select the newly created class
+      if (data) {
+        setSelectedClass(data as TutorClass);
+      }
     } catch (error) {
       console.error('Error creating class:', error);
       toast({
@@ -178,7 +199,7 @@ export default function Groups() {
 
       const studentList = data?.map(e => e.student).filter(Boolean) as Profile[];
       setStudents(studentList);
-      setSelectedClassId(classId);
+      setSelectedClassIdForStudents(classId);
     } catch (error) {
       console.error('Error fetching students:', error);
       toast({
@@ -204,7 +225,12 @@ export default function Groups() {
     }
   };
 
-  const selectedClassName = classes.find(c => c.id === selectedClassId)?.title || '';
+  const handleSelectClass = (cls: TutorClass) => {
+    setSelectedClass(cls);
+    setIsMobileSidebarOpen(false);
+  };
+
+  const selectedClassName = classes.find(c => c.id === selectedClassIdForStudents)?.title || '';
 
   if (!profile) {
     return (
@@ -216,100 +242,79 @@ export default function Groups() {
     );
   }
 
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const sidebarContent = (
+    <ClassSidebar
+      classes={classes}
+      enrollments={enrollments}
+      selectedClassId={selectedClass?.id || null}
+      onSelectClass={handleSelectClass}
+      onCreateClass={() => setIsCreateOpen(true)}
+      onBrowseTutors={() => navigate('/tutors')}
+      role={profile.role}
+      enrollmentCounts={enrollmentCounts}
+    />
+  );
+
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">My Classes</h1>
-            <p className="text-muted-foreground">
-              {profile.role === 'tutor'
-                ? 'Manage your classes and students'
-                : 'Your subscribed classes'}
-            </p>
+      <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-2rem)] flex flex-col md:flex-row -m-4 md:-m-6">
+        {/* Mobile Header with Menu Button */}
+        <div className="flex items-center gap-3 p-4 border-b border-border md:hidden">
+          <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-72">
+              {sidebarContent}
+            </SheetContent>
+          </Sheet>
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <h1 className="font-semibold text-foreground">
+              {selectedClass?.title || 'My Classes'}
+            </h1>
           </div>
-          {profile.role === 'tutor' && (
-            <Button onClick={() => setIsCreateOpen(true)} className="gradient-primary">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Class
-            </Button>
-          )}
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : profile.role === 'tutor' ? (
-          classes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium text-foreground">No classes yet</h3>
-              <p className="text-muted-foreground mt-1 mb-4">
-                Create your first class to start teaching
-              </p>
-              <Button onClick={() => setIsCreateOpen(true)} className="gradient-primary">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Class
-              </Button>
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {classes.map((cls) => (
-                <ClassCard
-                  key={cls.id}
-                  tutorClass={cls}
-                  role="tutor"
-                  enrollmentCount={enrollmentCounts[cls.id] || 0}
-                  onJoinSession={handleJoinSession}
-                  onViewStudents={handleViewStudents}
-                />
-              ))}
-            </div>
-          )
-        ) : enrollments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium text-foreground">
-              No subscriptions yet
-            </h3>
-            <p className="text-muted-foreground mt-1 mb-4">
-              Find a tutor and subscribe to start learning
-            </p>
-            <Button onClick={() => navigate('/tutors')} className="gradient-primary">
-              Find a Tutor
-            </Button>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {enrollments.map((enrollment) => (
-              enrollment.class && (
-                <ClassCard
-                  key={enrollment.id}
-                  tutorClass={enrollment.class}
-                  role="student"
-                  isLive={false}
-                  onJoinSession={handleJoinSession}
-                />
-              )
-            ))}
-          </div>
-        )}
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block w-72 h-full">
+          {sidebarContent}
+        </div>
 
-        <CreateClassForm
-          isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
-          onSubmit={handleCreateClass}
-          isSubmitting={isSubmitting}
-        />
-
-        <StudentListModal
-          isOpen={!!selectedClassId}
-          onClose={() => setSelectedClassId(null)}
-          className={selectedClassName}
-          students={students}
-        />
+        {/* Main Chat Area */}
+        <div className="flex-1 h-full overflow-hidden">
+          <GroupChatPanel
+            selectedClass={selectedClass}
+            onJoinSession={handleJoinSession}
+          />
+        </div>
       </div>
+
+      <CreateClassForm
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSubmit={handleCreateClass}
+        isSubmitting={isSubmitting}
+      />
+
+      <StudentListModal
+        isOpen={!!selectedClassIdForStudents}
+        onClose={() => setSelectedClassIdForStudents(null)}
+        className={selectedClassName}
+        students={students}
+      />
     </AppLayout>
   );
 }
