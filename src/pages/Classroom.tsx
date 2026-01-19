@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useCallback } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { MessageCircle, X } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { VideoContainer } from '@/components/classroom/VideoContainer';
@@ -9,8 +9,15 @@ import { cn } from '@/lib/utils';
 
 export default function Classroom() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const roomUrl = searchParams.get('room');
+  const sessionTitle = searchParams.get('title') || 'Live Session';
   const sessionId = searchParams.get('session');
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const handleLeave = useCallback(() => {
+    navigate('/groups');
+  }, [navigate]);
 
   return (
     <AppLayout>
@@ -18,8 +25,9 @@ export default function Classroom() {
         {/* Video Section */}
         <div className={cn('flex-1 transition-all', isChatOpen && 'md:mr-80')}>
           <VideoContainer
-            roomUrl={sessionId ? `https://example.daily.co/${sessionId}` : undefined}
-            sessionTitle={sessionId ? 'Math Tutorial - Quadratic Equations' : undefined}
+            roomUrl={roomUrl || undefined}
+            sessionTitle={sessionTitle}
+            onLeave={handleLeave}
           />
         </div>
 
