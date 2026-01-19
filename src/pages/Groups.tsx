@@ -215,7 +215,7 @@ export default function Groups() {
                 enrollments.find(e => e.class_id === classId)?.class;
     
     if (cls?.meeting_link) {
-      navigate(`/classroom?room=${encodeURIComponent(cls.meeting_link)}`);
+      navigate(`/classroom?room=${encodeURIComponent(cls.meeting_link)}&title=${encodeURIComponent(cls.title)}`);
     } else {
       toast({
         title: 'No Session Available',
