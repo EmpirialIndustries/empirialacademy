@@ -1,87 +1,40 @@
-import { useState, useMemo } from 'react';
-import { BookOpen } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { BookOpen, Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ResourceCard } from '@/components/resources/ResourceCard';
 import { ResourceFilters } from '@/components/resources/ResourceFilters';
 import { Resource } from '@/types';
-
-// Mock data for immediate UI
-const mockResources: Resource[] = [
-  {
-    id: '1',
-    title: 'Quadratic Equations Complete Guide',
-    description: 'Master quadratic equations with step-by-step solutions and practice problems.',
-    subject: 'Mathematics',
-    grade_level: 10,
-    file_url: '/resources/quadratic.pdf',
-    file_type: 'PDF',
-    uploaded_by: null,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Newton\'s Laws of Motion',
-    description: 'Understanding the fundamental laws that govern motion and forces.',
-    subject: 'Physics',
-    grade_level: 11,
-    file_url: '/resources/newton.pdf',
-    file_type: 'PDF',
-    uploaded_by: null,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    title: 'Organic Chemistry Basics',
-    description: 'Introduction to carbon compounds and organic reactions.',
-    subject: 'Chemistry',
-    grade_level: 12,
-    file_url: '/resources/organic.pdf',
-    file_type: 'PDF',
-    uploaded_by: null,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    title: 'Cell Biology & Genetics',
-    description: 'Explore the building blocks of life and hereditary mechanisms.',
-    subject: 'Biology',
-    grade_level: 10,
-    file_url: '/resources/biology.pdf',
-    file_type: 'PDF',
-    uploaded_by: null,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '5',
-    title: 'Shakespeare\'s Hamlet Analysis',
-    description: 'In-depth literary analysis of themes, characters, and symbolism.',
-    subject: 'English',
-    grade_level: 12,
-    file_url: '/resources/hamlet.pdf',
-    file_type: 'PDF',
-    uploaded_by: null,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '6',
-    title: 'Trigonometry Made Easy',
-    description: 'Sin, cos, tan explained with real-world applications.',
-    subject: 'Mathematics',
-    grade_level: 11,
-    file_url: '/resources/trig.pdf',
-    file_type: 'PDF',
-    uploaded_by: null,
-    created_at: new Date().toISOString(),
-  },
-];
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Resources() {
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGrade, setSelectedGrade] = useState('all');
   const [selectedSubject, setSelectedSubject] = useState('all');
 
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('resources')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setResources(data as Resource[]);
+      } catch (error) {
+        console.error('Error fetching resources:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResources();
+  }, []);
+
   const filteredResources = useMemo(() => {
-    return mockResources.filter((resource) => {
+    return resources.filter((resource) => {
       const matchesSearch =
         resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         resource.description?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -94,7 +47,7 @@ export default function Resources() {
 
       return matchesSearch && matchesGrade && matchesSubject;
     });
-  }, [searchQuery, selectedGrade, selectedSubject]);
+  }, [resources, searchQuery, selectedGrade, selectedSubject]);
 
   return (
     <AppLayout>
@@ -121,7 +74,11 @@ export default function Resources() {
         />
 
         {/* Resource Grid */}
-        {filteredResources.length > 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : filteredResources.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredResources.map((resource) => (
               <ResourceCard key={resource.id} resource={resource} />
@@ -132,7 +89,9 @@ export default function Resources() {
             <BookOpen className="mb-4 h-12 w-12 text-muted-foreground" />
             <p className="font-medium text-foreground">No resources found</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Try adjusting your filters or search query
+              {resources.length === 0
+                ? 'No resources have been uploaded yet'
+                : 'Try adjusting your filters or search query'}
             </p>
           </div>
         )}
