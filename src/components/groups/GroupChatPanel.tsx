@@ -1,10 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, MessageCircle, Video } from 'lucide-react';
+import { Send, MessageCircle, Video, MoreVertical, Users, Edit, Trash2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Message, TutorClass } from '@/types';
@@ -13,21 +20,33 @@ import { format, parseISO } from 'date-fns';
 interface GroupChatPanelProps {
   selectedClass: TutorClass | null;
   onJoinSession?: (classId: string) => void;
+  onViewStudents?: (classId: string) => void;
+  onEditClass?: (classId: string) => void;
+  onDeleteClass?: (classId: string) => void;
+  enrolledCount?: number;
 }
 
-export function GroupChatPanel({ selectedClass, onJoinSession }: GroupChatPanelProps) {
+export function GroupChatPanel({
+  selectedClass,
+  onJoinSession,
+  onViewStudents,
+  onEditClass,
+  onDeleteClass,
+  enrolledCount,
+}: GroupChatPanelProps) {
   const { profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const isTutor = profile?.role === 'tutor' && selectedClass?.tutor_id === profile?.id;
+
   // Fetch initial messages and subscribe to realtime
   useEffect(() => {
     if (!selectedClass) return;
 
     const fetchMessages = async () => {
-      // Use raw query to fetch messages by class_id (not yet in generated types)
       const { data, error } = await (supabase
         .from('messages') as any)
         .select(`
@@ -59,7 +78,6 @@ export function GroupChatPanel({ selectedClass, onJoinSession }: GroupChatPanelP
           filter: `class_id=eq.${selectedClass.id}`,
         },
         async (payload) => {
-          // Fetch the full message with sender info
           const { data } = await supabase
             .from('messages')
             .select(`
@@ -148,19 +166,74 @@ export function GroupChatPanel({ selectedClass, onJoinSession }: GroupChatPanelP
               <span className="text-xs text-muted-foreground">
                 Grade {selectedClass.grade}
               </span>
+              {enrolledCount !== undefined && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {enrolledCount}
+                </span>
+              )}
             </div>
           </div>
         </div>
-        {selectedClass.meeting_link && onJoinSession && (
-          <Button
-            onClick={() => onJoinSession(selectedClass.id)}
-            size="sm"
-            className="gradient-primary"
-          >
-            <Video className="h-4 w-4 mr-2" />
-            Join Video
-          </Button>
-        )}
+
+        <div className="flex items-center gap-2">
+          {selectedClass.meeting_link && onJoinSession && (
+            <Button
+              onClick={() => onJoinSession(selectedClass.id)}
+              size="sm"
+              className="gradient-primary gap-1"
+            >
+              {isTutor ? (
+                <>
+                  <Play className="h-4 w-4" />
+                  Start Session
+                </>
+              ) : (
+                <>
+                  <Video className="h-4 w-4" />
+                  Join
+                </>
+              )}
+            </Button>
+          )}
+
+          {/* Tutor Actions Dropdown */}
+          {isTutor && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {onViewStudents && (
+                  <DropdownMenuItem onClick={() => onViewStudents(selectedClass.id)}>
+                    <Users className="mr-2 h-4 w-4" />
+                    View Students
+                  </DropdownMenuItem>
+                )}
+                {onEditClass && (
+                  <DropdownMenuItem onClick={() => onEditClass(selectedClass.id)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Class
+                  </DropdownMenuItem>
+                )}
+                {onDeleteClass && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => onDeleteClass(selectedClass.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Class
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
       {/* Messages */}

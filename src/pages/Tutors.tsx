@@ -17,6 +17,8 @@ export default function Tutors() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState<TutorClass | null>(null);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [enrolledClassIds, setEnrolledClassIds] = useState<Set<string>>(new Set());
+  const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,7 +28,10 @@ export default function Tutors() {
 
   useEffect(() => {
     fetchClasses();
-  }, []);
+    if (profile?.role === 'student') {
+      fetchEnrolledClasses();
+    }
+  }, [profile]);
 
   useEffect(() => {
     filterClasses();
@@ -53,14 +58,16 @@ export default function Tutors() {
         .in('class_id', classIds)
         .eq('is_active', true);
 
-      const enrollmentCounts = enrollments?.reduce((acc, e) => {
+      const enrollmentCountMap = enrollments?.reduce((acc, e) => {
         acc[e.class_id] = (acc[e.class_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
 
+      setEnrollmentCounts(enrollmentCountMap);
+
       const classesWithCounts = data?.map(c => ({
         ...c,
-        enrollment_count: enrollmentCounts[c.id] || 0,
+        enrollment_count: enrollmentCountMap[c.id] || 0,
       })) as TutorClass[];
 
       setClasses(classesWithCounts || []);
@@ -73,6 +80,24 @@ export default function Tutors() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchEnrolledClasses = async () => {
+    if (!profile) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('enrollments')
+        .select('class_id')
+        .eq('student_id', profile.id)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      
+      setEnrolledClassIds(new Set(data?.map(e => e.class_id) || []));
+    } catch (error) {
+      console.error('Error fetching enrolled classes:', error);
     }
   };
 
@@ -212,6 +237,8 @@ export default function Tutors() {
                 key={tutorClass.id}
                 tutorClass={tutorClass}
                 onViewDetails={setSelectedClass}
+                isEnrolled={enrolledClassIds.has(tutorClass.id)}
+                enrolledCount={enrollmentCounts[tutorClass.id]}
               />
             ))}
           </div>

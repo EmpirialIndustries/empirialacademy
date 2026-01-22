@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { TutorClass, Enrollment } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Users, Video, BookOpen } from 'lucide-react';
+import { Calendar, Clock, Users, Video, BookOpen, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 
@@ -104,6 +105,9 @@ export default function Dashboard() {
       <div className="space-y-6">
         <WelcomeCard />
         
+        {/* Stats Section */}
+        <DashboardStats />
+        
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Today's Classes */}
           <Card>
@@ -152,10 +156,19 @@ export default function Dashboard() {
                         <Button
                           size="sm"
                           onClick={() => handleJoinClass(cls)}
-                          className="gradient-primary"
+                          className="gradient-primary gap-1"
                         >
-                          <Video className="h-4 w-4 mr-1" />
-                          Join
+                          {profile?.role === 'tutor' ? (
+                            <>
+                              <Play className="h-4 w-4" />
+                              Start
+                            </>
+                          ) : (
+                            <>
+                              <Video className="h-4 w-4" />
+                              Join
+                            </>
+                          )}
                         </Button>
                       )}
                     </div>
