@@ -37,7 +37,7 @@ export function QuickActions() {
             icon: Users,
             label: 'Find Tutors',
             description: 'Browse available tutors',
-            onClick: () => navigate('/resources'),
+            onClick: () => navigate('/tutors'),
             color: 'bg-secondary text-secondary-foreground',
           },
         ]),

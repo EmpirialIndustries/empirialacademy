@@ -1,5 +1,7 @@
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -33,6 +35,26 @@ export function TutorFilters({
   priceRange,
   onPriceRangeChange,
 }: TutorFiltersProps) {
+  const hasActiveFilters =
+    searchTerm ||
+    selectedSubject !== 'All Subjects' ||
+    selectedGrade !== 'All Grades' ||
+    priceRange !== 'All Prices';
+
+  const activeFilterCount = [
+    searchTerm ? 1 : 0,
+    selectedSubject !== 'All Subjects' ? 1 : 0,
+    selectedGrade !== 'All Grades' ? 1 : 0,
+    priceRange !== 'All Prices' ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
+
+  const clearAllFilters = () => {
+    onSearchChange('');
+    onSubjectChange('All Subjects');
+    onGradeChange('All Grades');
+    onPriceRangeChange('All Prices');
+  };
+
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -41,11 +63,21 @@ export function TutorFilters({
           placeholder="Search tutors or classes..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10"
+          className="pl-10 pr-10"
         />
+        {searchTerm && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            onClick={() => onSearchChange('')}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Select value={selectedSubject} onValueChange={onSubjectChange}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Subject" />
@@ -84,6 +116,21 @@ export function TutorFilters({
             ))}
           </SelectContent>
         </Select>
+
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearAllFilters}
+            className="gap-2"
+          >
+            <X className="h-3 w-3" />
+            Clear All
+            <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
+              {activeFilterCount}
+            </Badge>
+          </Button>
+        )}
       </div>
     </div>
   );
