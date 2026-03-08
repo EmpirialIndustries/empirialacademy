@@ -3,6 +3,8 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
+import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { DashboardTutorMarketplace } from '@/components/dashboard/DashboardTutorMarketplace';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { TutorClass, Enrollment } from '@/types';
