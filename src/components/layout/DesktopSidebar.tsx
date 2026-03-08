@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { NotificationBell } from '@/components/layout/NotificationBell';
 import {
   Tooltip,
   TooltipContent,
@@ -127,16 +128,20 @@ export function DesktopSidebar() {
         )}
       </nav>
 
-      {/* Footer with Theme Toggle */}
+      {/* Footer with Theme Toggle & Notifications */}
       <div className="border-t border-sidebar-border p-3">
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-2">
+            <NotificationBell />
             <ThemeToggle variant="ghost" size="icon" />
           </div>
         ) : (
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-muted-foreground">Theme</span>
-            <ThemeToggle variant="ghost" size="icon" />
+            <div className="flex items-center gap-1">
+              <NotificationBell />
+              <ThemeToggle variant="ghost" size="icon" />
+            </div>
           </div>
         )}
       </div>

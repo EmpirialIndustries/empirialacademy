@@ -1,6 +1,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { MobileNav } from './MobileNav';
 import { DesktopSidebar } from './DesktopSidebar';
+import { DemoBanner } from './DemoBanner';
 import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
@@ -13,17 +14,13 @@ export function AppLayout({ children }: AppLayoutProps) {
     return saved === 'true';
   });
 
-  // Listen for localStorage changes
   useEffect(() => {
     const handleStorageChange = () => {
       const saved = localStorage.getItem('sidebar-collapsed');
       setIsCollapsed(saved === 'true');
     };
 
-    // Listen for storage events from other tabs
     window.addEventListener('storage', handleStorageChange);
-    
-    // Also check periodically for same-tab changes (since storage event doesn't fire for same tab)
     const interval = setInterval(handleStorageChange, 100);
 
     return () => {
@@ -34,6 +31,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen w-full bg-background">
+      <DemoBanner />
       <DesktopSidebar />
       <main
         className={cn(
