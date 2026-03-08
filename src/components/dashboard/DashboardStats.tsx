@@ -172,10 +172,12 @@ export function DashboardStats() {
       {displayStats.map((stat, index) => (
         <Card
           key={stat.label}
-          className="group overflow-hidden transition-all hover:shadow-md hover:border-primary/20"
-          style={{ animationDelay: `${index * 100}ms` }}
+          className="group relative overflow-hidden transition-all hover:shadow-md hover:border-primary/20 animate-fade-in"
+          style={{ animationDelay: `${index * 150}ms`, animationFillMode: 'backwards' }}
         >
-          <CardContent className="p-4">
+          {/* Gradient left border accent */}
+          <div className={cn('absolute left-0 top-0 h-full w-1 bg-gradient-to-b', borderColors[index])} />
+          <CardContent className="p-4 pl-5">
             <div className="flex items-center gap-4">
               <div
                 className={cn(
@@ -187,7 +189,7 @@ export function DashboardStats() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {stat.value}
+                  <AnimatedNumber value={stat.value} />
                 </p>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
               </div>
