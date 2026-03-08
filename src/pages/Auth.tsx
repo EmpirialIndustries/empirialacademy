@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, Mail, Lock, User, Loader2, Eye, EyeOff } from 'lucide-react';
+import { GraduationCap, Mail, Lock, User, Loader2, Eye, EyeOff, Sparkles, BookOpen, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -13,13 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { UserRole } from '@/types';
+import { PasswordStrength } from '@/components/auth/PasswordStrength';
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, demoSignIn } = useAuth();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -73,9 +75,8 @@ export default function Auth() {
       );
       toast({
         title: 'Account created!',
-        description: 'Welcome to EduConnect. Start learning today!',
+        description: 'Please check your email to verify your account.',
       });
-      navigate('/');
     } catch (error: any) {
       toast({
         title: 'Error creating account',
@@ -87,11 +88,20 @@ export default function Auth() {
     }
   };
 
+  const handleDemoSignIn = (demoRole: UserRole) => {
+    demoSignIn(demoRole);
+    toast({
+      title: `Welcome to Demo Mode!`,
+      description: `You're exploring as a ${demoRole}. No real account needed.`,
+    });
+    navigate('/');
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4 gradient-subtle">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md space-y-6">
         {/* Logo */}
-        <div className="mb-8 text-center">
+        <div className="text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl gradient-primary shadow-glow">
             <GraduationCap className="h-8 w-8 text-primary-foreground" />
           </div>
@@ -99,6 +109,51 @@ export default function Auth() {
           <p className="mt-1 text-muted-foreground">Your learning journey starts here</p>
         </div>
 
+        {/* Demo Mode Card */}
+        <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">Try Demo Mode</span>
+              <span className="ml-auto text-xs rounded-full bg-primary/10 text-primary px-2 py-0.5 font-medium">
+                No signup needed
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Explore all features instantly with a demo account.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary"
+                onClick={() => handleDemoSignIn('student')}
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                As Student
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary"
+                onClick={() => handleDemoSignIn('tutor')}
+              >
+                <Users className="h-3.5 w-3.5" />
+                As Tutor
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Divider */}
+        <div className="relative">
+          <Separator />
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
+            or use your account
+          </span>
+        </div>
+
+        {/* Auth Card */}
         <Card className="shadow-card">
           <Tabs defaultValue="login" className="w-full">
             <CardHeader className="pb-4">
@@ -235,9 +290,7 @@ export default function Auth() {
                         )}
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Must be at least 6 characters
-                    </p>
+                    <PasswordStrength password={signUpPassword} />
                   </div>
 
                   <div className="space-y-2">
@@ -278,6 +331,14 @@ export default function Auth() {
             </CardContent>
           </Tabs>
         </Card>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-muted-foreground">
+          By continuing, you agree to our{' '}
+          <span className="text-primary cursor-pointer hover:underline">Terms of Service</span>
+          {' '}and{' '}
+          <span className="text-primary cursor-pointer hover:underline">Privacy Policy</span>
+        </p>
       </div>
     </div>
   );
