@@ -66,7 +66,8 @@ export function NotificationBell() {
   }, [profile?.id, isDemo]);
 
   const markAsRead = async (id: string) => {
-    await (supabase.from('notifications') as any)
+    await (supabase as any)
+      .from('notifications')
       .update({ read: true })
       .eq('id', id);
 
