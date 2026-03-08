@@ -197,7 +197,12 @@ export default function Dashboard() {
           <QuickActions />
         </div>
 
-        {/* All Classes Summary */}
+        {/* Find Tutors Marketplace - Students Only */}
+        <DashboardTutorMarketplace />
+
+        {/* Recent Activity + All Classes */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <RecentActivity />
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
