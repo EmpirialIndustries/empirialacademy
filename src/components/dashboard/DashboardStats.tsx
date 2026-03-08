@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { BookOpen, Users, TrendingUp, Calendar, Clock, Video, GraduationCap } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { BookOpen, Users, Calendar, Clock, Video, GraduationCap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +11,31 @@ interface StatsData {
   upcomingSessions: number;
   hoursLearned?: number;
 }
+
+function AnimatedNumber({ value, duration = 600 }: { value: number; duration?: number }) {
+  const [display, setDisplay] = useState(0);
+  const ref = useRef<number>();
+
+  useEffect(() => {
+    if (value === 0) { setDisplay(0); return; }
+    const start = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      setDisplay(Math.round(progress * value));
+      if (progress < 1) ref.current = requestAnimationFrame(tick);
+    };
+    ref.current = requestAnimationFrame(tick);
+    return () => { if (ref.current) cancelAnimationFrame(ref.current); };
+  }, [value, duration]);
+
+  return <>{display}</>;
+}
+
+const borderColors = [
+  'from-primary to-primary/60',
+  'from-success to-success/60',
+  'from-accent-foreground to-accent-foreground/60',
+];
 
 export function DashboardStats() {
   const { profile } = useAuth();
