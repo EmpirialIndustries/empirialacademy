@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, MessageCircle, Video, MoreVertical, Users, Edit, Trash2, Play } from 'lucide-react';
+import { Send, MessageCircle, Video, MoreVertical, Users, Edit, Trash2, Play, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -23,6 +23,7 @@ interface GroupChatPanelProps {
   onViewStudents?: (classId: string) => void;
   onEditClass?: (classId: string) => void;
   onDeleteClass?: (classId: string) => void;
+  onUnenroll?: (classId: string) => void;
   enrolledCount?: number;
 }
 
@@ -32,6 +33,7 @@ export function GroupChatPanel({
   onViewStudents,
   onEditClass,
   onDeleteClass,
+  onUnenroll,
   enrolledCount,
 }: GroupChatPanelProps) {
   const { profile } = useAuth();
@@ -41,108 +43,59 @@ export function GroupChatPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isTutor = profile?.role === 'tutor' && selectedClass?.tutor_id === profile?.id;
+  const isStudent = profile?.role === 'student';
 
-  // Fetch initial messages and subscribe to realtime
   useEffect(() => {
     if (!selectedClass) return;
 
     const fetchMessages = async () => {
-      const { data, error } = await (supabase
-        .from('messages') as any)
-        .select(`
-          *,
-          sender:profiles!sender_id(*)
-        `)
+      const { data, error } = await (supabase.from('messages') as any)
+        .select(`*, sender:profiles!sender_id(*)`)
         .eq('class_id', selectedClass.id)
         .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return;
-      }
-
+      if (error) { console.error('Error fetching messages:', error); return; }
       setMessages(data as Message[]);
     };
 
     fetchMessages();
 
-    // Subscribe to new messages
     const channel = supabase
       .channel(`class-messages:${selectedClass.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `class_id=eq.${selectedClass.id}`,
-        },
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `class_id=eq.${selectedClass.id}` },
         async (payload) => {
-          const { data } = await supabase
-            .from('messages')
-            .select(`
-              *,
-              sender:profiles!sender_id(*)
-            `)
-            .eq('id', payload.new.id)
-            .single();
-
-          if (data) {
-            setMessages((prev) => [...prev, data as Message]);
-          }
+          const { data } = await supabase.from('messages').select(`*, sender:profiles!sender_id(*)`).eq('id', payload.new.id).single();
+          if (data) setMessages((prev) => [...prev, data as Message]);
         }
-      )
-      .subscribe();
+      ).subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [selectedClass?.id]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedClass || !profile) return;
-
     setSending(true);
     try {
       const { error } = await supabase.from('messages').insert({
-        class_id: selectedClass.id,
-        sender_id: profile.id,
-        content: newMessage.trim(),
+        class_id: selectedClass.id, sender_id: profile.id, content: newMessage.trim(),
       } as any);
-
       if (error) throw error;
       setNewMessage('');
-    } catch (error) {
-      console.error('Error sending message:', error);
-    } finally {
-      setSending(false);
-    }
+    } catch (error) { console.error('Error sending message:', error); }
+    finally { setSending(false); }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const getInitials = (name: string) => name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   if (!selectedClass) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-6 text-center bg-card">
         <MessageCircle className="mb-4 h-16 w-16 text-muted-foreground/30" />
         <p className="text-lg font-medium text-foreground">Select a Class</p>
-        <p className="mt-2 text-sm text-muted-foreground max-w-xs">
-          Choose a class from the sidebar to view the group chat and communicate with your tutor or classmates
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground max-w-xs">Choose a class from the sidebar to view the group chat</p>
       </div>
     );
   }
@@ -153,24 +106,15 @@ export function GroupChatPanel({
       <div className="border-b border-border p-4 flex items-center justify-between bg-card/50 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-semibold text-sm">
-              {selectedClass.subject.slice(0, 2).toUpperCase()}
-            </span>
+            <span className="text-primary-foreground font-semibold text-sm">{selectedClass.subject.slice(0, 2).toUpperCase()}</span>
           </div>
           <div>
             <h3 className="font-semibold text-foreground">{selectedClass.title}</h3>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs">
-                {selectedClass.subject}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                Grade {selectedClass.grade}
-              </span>
+              <Badge variant="secondary" className="text-xs">{selectedClass.subject}</Badge>
+              <span className="text-xs text-muted-foreground">Grade {selectedClass.grade}</span>
               {enrolledCount !== undefined && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  {enrolledCount}
-                </span>
+                <span className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" />{enrolledCount}</span>
               )}
             </div>
           </div>
@@ -178,55 +122,41 @@ export function GroupChatPanel({
 
         <div className="flex items-center gap-2">
           {selectedClass.meeting_link && onJoinSession && (
-            <Button
-              onClick={() => onJoinSession(selectedClass.id)}
-              size="sm"
-              className="gradient-primary gap-1"
-            >
-              {isTutor ? (
-                <>
-                  <Play className="h-4 w-4" />
-                  Start Session
-                </>
-              ) : (
-                <>
-                  <Video className="h-4 w-4" />
-                  Join
-                </>
-              )}
+            <Button onClick={() => onJoinSession(selectedClass.id)} size="sm" className="gradient-primary gap-1">
+              {isTutor ? (<><Play className="h-4 w-4" />Start Session</>) : (<><Video className="h-4 w-4" />Join</>)}
             </Button>
           )}
 
-          {/* Tutor Actions Dropdown */}
-          {isTutor && (
+          {/* Actions Dropdown */}
+          {(isTutor || isStudent) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {onViewStudents && (
+                {isTutor && onViewStudents && (
                   <DropdownMenuItem onClick={() => onViewStudents(selectedClass.id)}>
-                    <Users className="mr-2 h-4 w-4" />
-                    View Students
+                    <Users className="mr-2 h-4 w-4" />View Students
                   </DropdownMenuItem>
                 )}
-                {onEditClass && (
+                {isTutor && onEditClass && (
                   <DropdownMenuItem onClick={() => onEditClass(selectedClass.id)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Class
+                    <Edit className="mr-2 h-4 w-4" />Edit Class
                   </DropdownMenuItem>
                 )}
-                {onDeleteClass && (
+                {isTutor && onDeleteClass && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => onDeleteClass(selectedClass.id)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Class
+                    <DropdownMenuItem onClick={() => onDeleteClass(selectedClass.id)} className="text-destructive focus:text-destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />Delete Class
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {isStudent && onUnenroll && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onUnenroll(selectedClass.id)} className="text-destructive focus:text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" />Leave Class
                     </DropdownMenuItem>
                   </>
                 )}
@@ -242,43 +172,25 @@ export function GroupChatPanel({
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
             <MessageCircle className="h-12 w-12 text-muted-foreground/30 mb-4" />
             <p className="text-muted-foreground">No messages yet</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Be the first to start the conversation!
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Be the first to start the conversation!</p>
           </div>
         ) : (
           <div className="space-y-4">
             {messages.map((message) => {
               const isOwn = message.sender_id === profile?.id;
               const sender = message.sender;
-
               return (
-                <div
-                  key={message.id}
-                  className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
-                >
+                <div key={message.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
                   <Avatar className="h-8 w-8 shrink-0">
                     <AvatarImage src={sender?.avatar_url || undefined} />
-                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                      {sender ? getInitials(sender.full_name) : '?'}
-                    </AvatarFallback>
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary">{sender ? getInitials(sender.full_name) : '?'}</AvatarFallback>
                   </Avatar>
                   <div className={`max-w-[75%] ${isOwn ? 'text-right' : ''}`}>
                     <div className={`mb-1 flex items-center gap-2 ${isOwn ? 'justify-end' : ''}`}>
-                      <span className="text-xs font-medium text-foreground">
-                        {isOwn ? 'You' : sender?.full_name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(parseISO(message.created_at), 'MMM d, h:mm a')}
-                      </span>
+                      <span className="text-xs font-medium text-foreground">{isOwn ? 'You' : sender?.full_name}</span>
+                      <span className="text-xs text-muted-foreground">{format(parseISO(message.created_at), 'MMM d, h:mm a')}</span>
                     </div>
-                    <div
-                      className={`rounded-2xl px-4 py-2 ${
-                        isOwn
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-foreground'
-                      }`}
-                    >
+                    <div className={`rounded-2xl px-4 py-2 ${isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     </div>
                   </div>
@@ -291,23 +203,9 @@ export function GroupChatPanel({
 
       {/* Input */}
       <div className="border-t border-border p-4 bg-card/50 backdrop-blur-sm">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSend();
-          }}
-          className="flex gap-2"
-        >
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={`Message ${selectedClass.title}...`}
-            disabled={sending}
-            className="flex-1"
-          />
-          <Button type="submit" size="icon" disabled={sending || !newMessage.trim()}>
-            <Send className="h-4 w-4" />
-          </Button>
+        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
+          <Input value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder={`Message ${selectedClass.title}...`} disabled={sending} className="flex-1" />
+          <Button type="submit" size="icon" disabled={sending || !newMessage.trim()}><Send className="h-4 w-4" /></Button>
         </form>
       </div>
     </div>

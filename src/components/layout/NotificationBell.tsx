@@ -80,7 +80,8 @@ export function NotificationBell() {
     const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
     if (unreadIds.length === 0) return;
 
-    await (supabase.from('notifications') as any)
+    await (supabase as any)
+      .from('notifications')
       .update({ read: true })
       .in('id', unreadIds);
 
