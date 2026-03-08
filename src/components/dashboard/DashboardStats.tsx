@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { BookOpen, Users, TrendingUp, Calendar, Clock, Video, GraduationCap } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { BookOpen, Users, Calendar, Clock, Video, GraduationCap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +11,31 @@ interface StatsData {
   upcomingSessions: number;
   hoursLearned?: number;
 }
+
+function AnimatedNumber({ value, duration = 600 }: { value: number; duration?: number }) {
+  const [display, setDisplay] = useState(0);
+  const ref = useRef<number>();
+
+  useEffect(() => {
+    if (value === 0) { setDisplay(0); return; }
+    const start = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      setDisplay(Math.round(progress * value));
+      if (progress < 1) ref.current = requestAnimationFrame(tick);
+    };
+    ref.current = requestAnimationFrame(tick);
+    return () => { if (ref.current) cancelAnimationFrame(ref.current); };
+  }, [value, duration]);
+
+  return <>{display}</>;
+}
+
+const borderColors = [
+  'from-primary to-primary/60',
+  'from-success to-success/60',
+  'from-accent-foreground to-accent-foreground/60',
+];
 
 export function DashboardStats() {
   const { profile } = useAuth();
@@ -147,10 +172,12 @@ export function DashboardStats() {
       {displayStats.map((stat, index) => (
         <Card
           key={stat.label}
-          className="group overflow-hidden transition-all hover:shadow-md hover:border-primary/20"
-          style={{ animationDelay: `${index * 100}ms` }}
+          className="group relative overflow-hidden transition-all hover:shadow-md hover:border-primary/20 animate-fade-in"
+          style={{ animationDelay: `${index * 150}ms`, animationFillMode: 'backwards' }}
         >
-          <CardContent className="p-4">
+          {/* Gradient left border accent */}
+          <div className={cn('absolute left-0 top-0 h-full w-1 bg-gradient-to-b', borderColors[index])} />
+          <CardContent className="p-4 pl-5">
             <div className="flex items-center gap-4">
               <div
                 className={cn(
@@ -162,7 +189,7 @@ export function DashboardStats() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {stat.value}
+                  <AnimatedNumber value={stat.value} />
                 </p>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
               </div>

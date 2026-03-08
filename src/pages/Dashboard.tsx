@@ -3,6 +3,8 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
+import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { DashboardTutorMarketplace } from '@/components/dashboard/DashboardTutorMarketplace';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { TutorClass, Enrollment } from '@/types';
@@ -195,59 +197,67 @@ export default function Dashboard() {
           <QuickActions />
         </div>
 
-        {/* All Classes Summary */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BookOpen className="h-5 w-5 text-primary" />
-              {profile?.role === 'tutor' ? 'Your Classes' : 'Enrolled Classes'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              </div>
-            ) : (profile?.role === 'tutor' ? classes : enrollments.map(e => e.class!)).length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {(profile?.role === 'tutor' ? classes : enrollments.map(e => e.class!)).map((cls) => (
-                  <div
-                    key={cls.id}
-                    className="rounded-lg border border-border p-3 bg-card/50 hover:bg-accent/50 transition-colors cursor-pointer"
-                    onClick={() => navigate('/groups')}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary">{cls.subject}</Badge>
-                      <span className="text-xs text-muted-foreground">
-                        Grade {cls.grade}
-                      </span>
+        {/* Find Tutors Marketplace - Students Only */}
+        <DashboardTutorMarketplace />
+
+        {/* Recent Activity + All Classes */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <RecentActivity />
+
+          {/* All Classes Summary */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BookOpen className="h-5 w-5 text-primary" />
+                {profile?.role === 'tutor' ? 'Your Classes' : 'Enrolled Classes'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                </div>
+              ) : (profile?.role === 'tutor' ? classes : enrollments.map(e => e.class!)).length > 0 ? (
+                <div className="grid gap-3">
+                  {(profile?.role === 'tutor' ? classes : enrollments.map(e => e.class!)).map((cls) => (
+                    <div
+                      key={cls.id}
+                      className="rounded-lg border border-border p-3 bg-card/50 hover:bg-accent/50 transition-colors cursor-pointer"
+                      onClick={() => navigate('/groups')}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="secondary">{cls.subject}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          Grade {cls.grade}
+                        </span>
+                      </div>
+                      <p className="font-medium text-foreground">{cls.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {cls.schedule_days.join(', ')} at {format(new Date(`2000-01-01T${cls.start_time}`), 'h:mm a')}
+                      </p>
                     </div>
-                    <p className="font-medium text-foreground">{cls.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {cls.schedule_days.join(', ')} at {format(new Date(`2000-01-01T${cls.start_time}`), 'h:mm a')}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <BookOpen className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  {profile?.role === 'tutor'
-                    ? "You haven't created any classes yet"
-                    : "You're not enrolled in any classes yet"}
-                </p>
-                <Button
-                  variant="link"
-                  className="mt-2 text-primary"
-                  onClick={() => navigate(profile?.role === 'tutor' ? '/groups' : '/tutors')}
-                >
-                  {profile?.role === 'tutor' ? 'Create a class' : 'Browse classes'}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <BookOpen className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    {profile?.role === 'tutor'
+                      ? "You haven't created any classes yet"
+                      : "You're not enrolled in any classes yet"}
+                  </p>
+                  <Button
+                    variant="link"
+                    className="mt-2 text-primary"
+                    onClick={() => navigate(profile?.role === 'tutor' ? '/groups' : '/tutors')}
+                  >
+                    {profile?.role === 'tutor' ? 'Create a class' : 'Browse classes'}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </AppLayout>
   );
