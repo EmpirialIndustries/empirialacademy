@@ -32,8 +32,8 @@ export function NotificationBell() {
     if (!profile || isDemo) return;
 
     const fetchNotifications = async () => {
-      const { data } = await (supabase
-        .from('notifications') as any)
+      const { data } = await (supabase as any)
+        .from('notifications')
         .select('*')
         .eq('user_id', profile.id)
         .order('created_at', { ascending: false })
