@@ -47,7 +47,7 @@ function Counter({ target, isDecimal, suffix }: { target: number; isDecimal?: bo
       )}>
         {isDecimal ? count.toFixed(1) : count}{suffix}
       </p>
-      <p className="mt-1 text-sm text-muted-foreground">{stats.find(s => s.target === target || s.value === target)?.label}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{stats.find(s => s.value === target)?.label}</p>
     </div>
   );
 }
