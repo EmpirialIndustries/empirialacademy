@@ -258,7 +258,7 @@ export default function Groups() {
   }
 
   if (isLoading) {
-    return (<AppLayout><div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></AppLayout>);
+    return (<AppLayout><div className="py-6"><ClassListSkeleton /></div></AppLayout>);
   }
 
   const sidebarContent = (
