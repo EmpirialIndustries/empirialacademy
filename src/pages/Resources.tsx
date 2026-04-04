@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
-import { BookOpen, Loader2, Upload } from 'lucide-react';
+import { BookOpen, Upload } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ResourceCard } from '@/components/resources/ResourceCard';
 import { ResourceFilters } from '@/components/resources/ResourceFilters';
 import { UploadResourceForm } from '@/components/resources/UploadResourceForm';
+import { ResourceGridSkeleton } from '@/components/ui/skeleton-loaders';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Resource } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -67,19 +69,18 @@ export default function Resources() {
         />
 
         {loading ? (
-          <div className="flex items-center justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          <ResourceGridSkeleton />
         ) : filteredResources.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredResources.map((resource) => (<ResourceCard key={resource.id} resource={resource} />))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <BookOpen className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="font-medium text-foreground">No resources found</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {resources.length === 0 ? 'No resources have been uploaded yet' : 'Try adjusting your filters or search query'}
-            </p>
-          </div>
+          <EmptyState
+            icon={BookOpen}
+            title="No resources found"
+            description={resources.length === 0 ? 'No resources have been uploaded yet.' : 'Try adjusting your filters or search query.'}
+            className="py-16"
+          />
         )}
       </div>
 

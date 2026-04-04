@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { CalendarView } from '@/components/schedule/CalendarView';
+import { CalendarSkeleton } from '@/components/ui/skeleton-loaders';
+import { EmptyState } from '@/components/ui/empty-state';
 import { TutorClass } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Video, Play } from 'lucide-react';
+import { Video, Play, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -72,7 +74,16 @@ export default function Schedule() {
   };
 
   if (!profile) {
-    return (<AppLayout><div className="flex items-center justify-center py-12"><p className="text-muted-foreground">Please log in to view your schedule</p></div></AppLayout>);
+    return (
+      <AppLayout>
+        <EmptyState
+          icon={Calendar}
+          title="Sign in required"
+          description="Please log in to view your schedule."
+          className="py-12"
+        />
+      </AppLayout>
+    );
   }
 
   return (
@@ -84,7 +95,7 @@ export default function Schedule() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          <CalendarSkeleton />
         ) : (
           <CalendarView classes={classes} onDayClick={handleDayClick} />
         )}
