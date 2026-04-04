@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { ClassListSkeleton } from '@/components/ui/skeleton-loaders';
+import { EmptyState } from '@/components/ui/empty-state';
 import { ClassSidebar } from '@/components/groups/ClassSidebar';
 import { GroupChatPanel } from '@/components/groups/GroupChatPanel';
 import { CreateClassForm } from '@/components/groups/CreateClassForm';
@@ -256,7 +258,7 @@ export default function Groups() {
   }
 
   if (isLoading) {
-    return (<AppLayout><div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></AppLayout>);
+    return (<AppLayout><div className="py-6"><ClassListSkeleton /></div></AppLayout>);
   }
 
   const sidebarContent = (

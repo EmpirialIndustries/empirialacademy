@@ -5,6 +5,9 @@ import { QuickActions } from '@/components/dashboard/QuickActions';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { DashboardTutorMarketplace } from '@/components/dashboard/DashboardTutorMarketplace';
+import { DashboardSkeleton } from '@/components/ui/skeleton-loaders';
+import { EmptyState } from '@/components/ui/empty-state';
+import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { TutorClass, Enrollment } from '@/types';
@@ -22,6 +25,13 @@ export default function Dashboard() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (profile && !localStorage.getItem('educonnect-onboarded')) {
+      setShowOnboarding(true);
+    }
+  }, [profile]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,7 +39,6 @@ export default function Dashboard() {
 
       try {
         if (profile.role === 'tutor') {
-          // Fetch tutor's classes
           const { data, error } = await supabase
             .from('classes')
             .select('*')
@@ -39,7 +48,6 @@ export default function Dashboard() {
 
           if (error) throw error;
 
-          // Get enrollment counts
           const classIds = data?.map(c => c.id) || [];
           if (classIds.length > 0) {
             const { data: enrollmentData } = await supabase
@@ -58,7 +66,6 @@ export default function Dashboard() {
 
           setClasses(data as TutorClass[] || []);
         } else {
-          // Fetch student's enrollments
           const { data, error } = await supabase
             .from('enrollments')
             .select(`
@@ -91,7 +98,6 @@ export default function Dashboard() {
 
   const todayDay = getDayAbbreviation();
   
-  // Get today's classes
   const todaysClasses = profile?.role === 'tutor'
     ? classes.filter(c => c.schedule_days.includes(todayDay))
     : enrollments.filter(e => e.class?.schedule_days.includes(todayDay)).map(e => e.class!);
@@ -102,12 +108,24 @@ export default function Dashboard() {
     }
   };
 
+  if (loading) {
+    return (
+      <AppLayout>
+        <DashboardSkeleton />
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
+      <OnboardingModal
+        open={showOnboarding}
+        onComplete={() => setShowOnboarding(false)}
+      />
+
       <div className="space-y-6">
         <WelcomeCard />
         
-        {/* Stats Section */}
         <DashboardStats />
         
         <div className="grid gap-6 lg:grid-cols-2">
@@ -120,11 +138,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                </div>
-              ) : todaysClasses.length > 0 ? (
+              {todaysClasses.length > 0 ? (
                 <div className="space-y-3">
                   {todaysClasses.map((cls) => (
                     <div
@@ -161,15 +175,9 @@ export default function Dashboard() {
                           className="gradient-primary gap-1"
                         >
                           {profile?.role === 'tutor' ? (
-                            <>
-                              <Play className="h-4 w-4" />
-                              Start
-                            </>
+                            <><Play className="h-4 w-4" />Start</>
                           ) : (
-                            <>
-                              <Video className="h-4 w-4" />
-                              Join
-                            </>
+                            <><Video className="h-4 w-4" />Join</>
                           )}
                         </Button>
                       )}
@@ -177,19 +185,14 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Calendar className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">
-                    No classes scheduled for today
-                  </p>
-                  <Button
-                    variant="link"
-                    className="mt-2 text-primary"
-                    onClick={() => navigate('/schedule')}
-                  >
-                    View full schedule
-                  </Button>
-                </div>
+                <EmptyState
+                  icon={Calendar}
+                  title="No classes today"
+                  description="No classes are scheduled for today. Check your full schedule for upcoming sessions."
+                  actionLabel="View schedule"
+                  onAction={() => navigate('/schedule')}
+                  className="py-8"
+                />
               )}
             </CardContent>
           </Card>
@@ -197,10 +200,8 @@ export default function Dashboard() {
           <QuickActions />
         </div>
 
-        {/* Find Tutors Marketplace - Students Only */}
         <DashboardTutorMarketplace />
 
-        {/* Recent Activity + All Classes */}
         <div className="grid gap-6 lg:grid-cols-2">
           <RecentActivity />
 
@@ -213,11 +214,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                </div>
-              ) : (profile?.role === 'tutor' ? classes : enrollments.map(e => e.class!)).length > 0 ? (
+              {(profile?.role === 'tutor' ? classes : enrollments.map(e => e.class!)).length > 0 ? (
                 <div className="grid gap-3">
                   {(profile?.role === 'tutor' ? classes : enrollments.map(e => e.class!)).map((cls) => (
                     <div
@@ -239,21 +236,18 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <BookOpen className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">
-                    {profile?.role === 'tutor'
-                      ? "You haven't created any classes yet"
-                      : "You're not enrolled in any classes yet"}
-                  </p>
-                  <Button
-                    variant="link"
-                    className="mt-2 text-primary"
-                    onClick={() => navigate(profile?.role === 'tutor' ? '/groups' : '/tutors')}
-                  >
-                    {profile?.role === 'tutor' ? 'Create a class' : 'Browse classes'}
-                  </Button>
-                </div>
+                <EmptyState
+                  icon={BookOpen}
+                  title={profile?.role === 'tutor' ? 'No classes yet' : 'Not enrolled yet'}
+                  description={
+                    profile?.role === 'tutor'
+                      ? "Create your first class to start teaching."
+                      : "Browse available tutors and enroll in a class."
+                  }
+                  actionLabel={profile?.role === 'tutor' ? 'Create a class' : 'Browse classes'}
+                  onAction={() => navigate(profile?.role === 'tutor' ? '/groups' : '/tutors')}
+                  className="py-8"
+                />
               )}
             </CardContent>
           </Card>

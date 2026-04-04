@@ -74,32 +74,32 @@
   }
 
   .dark {
-    --background: 200 25% 8%;
+    --background: 200 25% 7%;
     --foreground: 210 20% 95%;
 
-    --card: 200 22% 12%;
+    --card: 200 22% 11%;
     --card-foreground: 210 20% 95%;
 
-    --popover: 200 22% 12%;
+    --popover: 200 22% 11%;
     --popover-foreground: 210 20% 95%;
 
     --primary: 175 55% 45%;
-    --primary-foreground: 200 25% 8%;
+    --primary-foreground: 200 25% 5%;
 
-    --secondary: 200 20% 18%;
+    --secondary: 200 20% 16%;
     --secondary-foreground: 175 40% 80%;
 
-    --muted: 200 18% 15%;
-    --muted-foreground: 210 15% 60%;
+    --muted: 200 18% 14%;
+    --muted-foreground: 210 12% 55%;
 
     --accent: 38 85% 55%;
     --accent-foreground: 38 92% 10%;
 
-    --destructive: 0 65% 45%;
+    --destructive: 0 65% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 200 18% 20%;
-    --input: 200 18% 20%;
+    --border: 200 15% 18%;
+    --input: 200 15% 18%;
     --ring: 175 55% 45%;
 
     --success: 152 55% 45%;
@@ -108,13 +108,21 @@
     --warning: 38 85% 55%;
     --warning-foreground: 38 92% 10%;
 
-    --sidebar-background: 200 22% 10%;
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(175 55% 38%) 0%, hsl(180 45% 45%) 100%);
+    --gradient-hero: linear-gradient(145deg, hsl(175 55% 30%) 0%, hsl(180 50% 25%) 50%, hsl(185 45% 30%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(200 25% 7%) 0%, hsl(200 20% 10%) 100%);
+
+    --shadow-card: 0 2px 8px -2px hsl(0 0% 0% / 0.3), 0 4px 16px -4px hsl(0 0% 0% / 0.2);
+    --shadow-glow: 0 0 20px hsl(175 55% 45% / 0.2);
+
+    --sidebar-background: 200 22% 9%;
     --sidebar-foreground: 210 15% 85%;
     --sidebar-primary: 175 55% 45%;
-    --sidebar-primary-foreground: 200 25% 8%;
-    --sidebar-accent: 200 20% 16%;
+    --sidebar-primary-foreground: 200 25% 5%;
+    --sidebar-accent: 200 20% 14%;
     --sidebar-accent-foreground: 175 40% 80%;
-    --sidebar-border: 200 18% 18%;
+    --sidebar-border: 200 15% 16%;
     --sidebar-ring: 175 55% 45%;
   }
 }
