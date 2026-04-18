@@ -36,7 +36,7 @@ export function ClassCard({
 
   return (
     <Card className={cn(
-      "transition-smooth hover:shadow-lg",
+      "card-interactive",
       isLive && "ring-2 ring-green-500 border-green-500/50"
     )}>
       <CardHeader className="pb-3">
