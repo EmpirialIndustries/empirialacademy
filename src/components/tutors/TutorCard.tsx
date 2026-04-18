@@ -35,7 +35,7 @@ export function TutorCard({ tutorClass, onViewDetails, isEnrolled = false, enrol
   };
 
   return (
-    <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30 hover:-translate-y-1">
+    <Card className="group relative overflow-hidden card-interactive hover:shadow-primary/5 hover:border-primary/30">
       {/* Enrolled Badge */}
       {isEnrolled && (
         <div className="absolute right-3 top-3 z-10">

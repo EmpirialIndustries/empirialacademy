@@ -22,7 +22,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
   const colorClass = subjectColors[resource.subject] || 'bg-muted text-muted-foreground';
 
   return (
-    <Card className="overflow-hidden shadow-card transition-smooth hover:shadow-lg">
+    <Card className="overflow-hidden card-interactive shadow-card">
       <CardContent className="p-0">
         <div className="flex items-start gap-4 p-4">
           <div className={`rounded-lg p-3 ${colorClass}`}>
