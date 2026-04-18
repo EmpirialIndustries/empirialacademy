@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { User, Mail, GraduationCap, LogOut, Calendar, Save, Loader2, Camera, BookOpen, X } from 'lucide-react';
+import { User, Mail, GraduationCap, LogOut, Calendar, Save, Loader2, Camera, BookOpen, X, Moon, Sun, Monitor } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from 'next-themes';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { format, parseISO } from 'date-fns';
 export default function Profile() {
   const { user, profile, signOut, isDemo } = useAuth();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -267,6 +269,39 @@ export default function Profile() {
             <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
               <Calendar className="h-5 w-5 text-muted-foreground" />
               <div><p className="text-sm text-muted-foreground">Member Since</p><p className="font-medium text-foreground">{format(parseISO(profile.created_at), 'MMMM d, yyyy')}</p></div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Appearance */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Sun className="h-5 w-5 text-primary" />
+              Appearance
+            </CardTitle>
+            <CardDescription>Choose how EduConnect looks to you</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: 'light', label: 'Light', icon: Sun },
+                { value: 'dark', label: 'Dark', icon: Moon },
+                { value: 'system', label: 'System', icon: Monitor },
+              ].map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  onClick={() => setTheme(value)}
+                  className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${
+                    theme === value
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-sm font-medium">{label}</span>
+                </button>
+              ))}
             </div>
           </CardContent>
         </Card>
